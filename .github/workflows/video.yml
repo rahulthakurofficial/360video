@@ -1,0 +1,46 @@
+name: Deploy video
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Debug Files
+        run: ls -la video/vite-project
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+          cache: 'npm'
+          cache-dependency-path: video/vite-project/package-lock.json
+
+      - name: Install Dependencies
+        run: |
+          cd video/vite-project
+          npm ci
+
+      - name: Build React App
+        run: |
+          cd video/vite-project
+          npm run build
+
+      - name: Deploy to Netlify
+        uses: nwtgck/actions-netlify@v2
+        with:
+          publish-dir: video/vite-project/dist  # Vite outputs the build to 'dist' by default
+          production-branch: main
+          deploy-message: "video Deployed via GitHub Actions"
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          netlify-auth-token: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          site-id: ${{ secrets.NETLIFY_SITE_ID }}
